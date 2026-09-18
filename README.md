@@ -8,6 +8,12 @@ beatoraja用の進捗管理ツール。公開URLを開き、各自のDBをブラ
 
 公開版の利用にNode.jsは不要です。ローカル開発・テストはNode.js 24以上を使用します。`dist/` はそのまま静的ホスティング（GitHub Pages等）に配置できます。WASMと画像を含め、すべて相対パスです。
 
+## GitHub Pagesへの公開
+
+GitHubリポジトリへコードをpushし、Settings → Pages → Build and deploymentのSourceを「GitHub Actions」に設定します。同梱の `.github/workflows/pages.yml` がmain更新時に `dist/` だけを公開します。初回はActions画面から手動実行もできます。個人データの `data/` と `config.local.json` はGit管理・公開対象に含めません。
+
+公開URLが変わるとブラウザーの保存領域も別になります。以前のURLでバックアップを書き出し、新しいURLで復元してください。
+
 ## 保存とバックアップ
 
 記録と調子はIndexedDBに保存し、再アクセス時に復元します。保存先はブラウザー・プロファイル・サイトのURL単位です。別PCとの自動同期はありません。プライベートブラウズやサイトデータ削除では消えることがあります。
