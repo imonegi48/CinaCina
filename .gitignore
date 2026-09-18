@@ -1,0 +1,5 @@
+data/
+config.local.json
+.sites-runtime/
+node_modules/
+images/*.clip

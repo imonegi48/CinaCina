@@ -1,0 +1,20 @@
+// Optional local verification/migration. Its outputs stay in ignored data/.
+import fs from 'node:fs';
+import path from 'node:path';
+import assert from 'node:assert/strict';
+import initSqlJs from 'sql.js';
+import {parseDatabases} from '../dist/importer.js';
+import {validateBackup} from '../dist/storage.js';
+import {buildSnapshot,loadCatalog} from '../lib.mjs';
+const config=JSON.parse(fs.readFileSync('config.local.json','utf8'));
+const base=path.join(config.beatorajaPath,'player',config.player),score=path.join(base,'score.db'),log=path.join(base,'scorelog.db');
+const SQL=await initSqlJs();
+const result=parseDatabases(SQL,fs.readFileSync(score),fs.readFileSync(log),fs.readFileSync(path.join(config.beatorajaPath,'songdata.db')),JSON.parse(fs.readFileSync('dist/catalog.json','utf8')));
+const native=buildSnapshot(score,log,loadCatalog(config.beatorajaPath));
+assert.equal(JSON.stringify(result.snapshot.days)===JSON.stringify(native.days),true,'Daily records match');
+for(const t of result.snapshot.tables)assert.deepEqual(t,native.tables.find(x=>x.tag===t.tag));
+const state=JSON.parse(fs.readFileSync('data/state.json','utf8'));
+state.metadata=result.metadata;
+validateBackup(state);
+fs.writeFileSync('data/CinaCina-backup.json',JSON.stringify({format:'cinacina-backup',version:1,state}));
+console.log('WASM matches native: '+native.days.length+' days, all four tables. Migration backup validated.');
