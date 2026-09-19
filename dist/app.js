@@ -1,4 +1,5 @@
 import {loadState,importFiles,saveMood as persistMood,updateState,validateBackup} from './storage.js';
+import {setupChartList} from './chart-list.js';
 const $=s=>document.querySelector(s),fmt=n=>Number(n).toLocaleString('ja-JP');
 const MOODS=['神格Ｂ','Ｂ','デスＢ'],ICONS={'神格Ｂ':'GOD_B.png','Ｂ':'B.png','デスＢ':'DEATH_B.png'};
 const moodImage=m=>`<img class="mood-image" src="./images/${ICONS[m]}" alt="${m}" width="48" height="48">`;
@@ -6,6 +7,7 @@ const LAMPS=['NP','F','EC','C','HC','EXHC','FC'];
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const jst=()=>new Date(Date.now()+9*3600000).toISOString().slice(0,10);
 let state={snapshot:null,moods:{}},month=jst().slice(0,7),selected=null,tableTag='sl';
+const refreshChartList=setupChartList(()=>state.snapshot,()=>state.metadata||[]);
 const updateFilters=new Set(['EC','C','HC','EXHC','FC']);
 function renderLampSection(day){
   const visible=day.updates.filter(u=>updateFilters.has(u.to));
@@ -40,7 +42,7 @@ function render(){
     html+=`<button class="day ${active?'':'empty'} ${selected===date?'selected':''} ${date===jst()?'today':''}" data-day="${date}" ${active?'':'disabled'} aria-label="${date}${active?' '+fmt(day.notes)+'打鍵 '+(mood||'調子未登録'):' プレイなし'}" ${active?`title="${fmt(day.notes)} 打鍵 · ${day.plays} プレイ${mood?' · '+mood:''}"`:''}><span class="number">${n}</span>${active&&mood?`<span class="mood-icon" aria-hidden="true">${moodImage(mood)}</span>`:''}${active?`<span class="notes-mini">${fmt(day.notes)}</span>`:''}</button>`;
   }
   $('#calendar').innerHTML=html;
-  renderDetail();renderTables();
+  renderDetail();renderTables();refreshChartList();
   if(dayData(selected)?.notes>0){const text=buildPostText(dayData(selected)); $('#detail').insertAdjacentHTML('afterbegin',`<button id="open-post" class="full" ${text?'':'disabled'} style="margin-bottom:20px" title="EC以上のランプ更新をまとめます">投稿用テキストをコピー</button>`);}
 }
 function groupUpdates(updates){
@@ -72,7 +74,11 @@ function renderTables(){
   const extras=['補助','不明'].filter(l=>table.levels.some(r=>r.counts[l]>0)),lamps=[...LAMPS,...extras];
   $('#legend').innerHTML=lamps.map(l=>`<span><i style="background:var(--${l})"></i>${l}</span>`).join('');
   $('#table-description').textContent=`${table.name} · 全 ${fmt(table.levels.reduce((n,l)=>n+l.total,0))} 譜面`;
-  $('#bars').innerHTML=table.levels.map(l=>{const cleared=['EC','C','HC','EXHC','FC'].reduce((n,k)=>n+l.counts[k],0);return `<div class="bar-row"><span class="bar-label">${esc(table.tag+l.level)}</span><div class="bar-track" role="img" aria-label="${esc(table.tag+l.level)} ${lamps.map(k=>`${k} ${l.counts[k]}曲`).join('、')}">${[...lamps].reverse().filter(k=>l.counts[k]).map(k=>`<div class="bar-part" style="width:${l.counts[k]/l.total*100}%;background:var(--${k})" title="${k}: ${l.counts[k]}譜面"></div>`).join('')}</div><span class="bar-caption" title="EC以上 / 全譜面">${cleared} / ${l.total}</span></div>`;}).join('');
+  $('#bars').innerHTML=table.levels.map(l=>{
+    const cleared=['EC','C','HC','EXHC','FC'].reduce((n,k)=>n+l.counts[k],0);
+    const attrs=`data-chart-table="${esc(table.tag)}" data-chart-level="${esc(l.level)}"`;
+    return `<div class="bar-row"><button class="bar-label" ${attrs} aria-haspopup="dialog" title="${esc(table.tag+l.level)}の全譜面を見る">${esc(table.tag+l.level)}</button><div class="bar-track" role="group" aria-label="${esc(table.tag+l.level)}のクリアランプ">${[...lamps].reverse().filter(k=>l.counts[k]).map(k=>`<button type="button" class="bar-part" ${attrs} data-chart-lamp="${k}" aria-haspopup="dialog" aria-label="${esc(table.tag+l.level)} ${k}: ${l.counts[k]}譜面の一覧" style="width:${l.counts[k]/l.total*100}%;background:var(--${k})" title="${k}: ${l.counts[k]}譜面 — クリックで一覧"></button>`).join('')}</div><span class="bar-caption" title="EC以上 / 全譜面">${cleared} / ${l.total}</span></div>`;
+  }).join('');
 }
 async function saveMood(date,mood){try{state=await persistMood(date,mood);render();renderMoodDays();}catch(e){notice(e.message);}}
 let moodDates=[];

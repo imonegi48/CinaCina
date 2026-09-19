@@ -8,7 +8,7 @@ const tables=[];
 for(const file of fs.readdirSync(path.join(config.beatorajaPath,'table')).filter(f=>f.endsWith('.bmt'))){
   const raw=JSON.parse(zlib.gunzipSync(fs.readFileSync(path.join(config.beatorajaPath,'table',file))));
   if(!['★','★★','st','sl'].includes(raw.tag?.trim()))continue;
-  tables.push({tag:raw.tag.trim(),name:raw.name,url:raw.url,folder:raw.folder.map(f=>({name:f.name,songs:f.songs.map(s=>({title:s.title,md5:s.md5,sha256:s.sha256}))}))});
+  tables.push({tag:raw.tag.trim(),name:raw.name,url:raw.url,folder:raw.folder.map(f=>({name:f.name,songs:f.songs.map(s=>({title:s.title,md5:s.md5,sha256:s.sha256,url:s.url,appendurl:s.appendurl}))}))});
 }
 fs.writeFileSync('dist/catalog.json',JSON.stringify({updatedAt:new Date().toISOString().slice(0,10),tables}));
 fs.mkdirSync('dist/vendor',{recursive:true});

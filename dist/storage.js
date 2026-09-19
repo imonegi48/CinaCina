@@ -64,7 +64,17 @@ export function validateBackup(value){
   }
   for(const t of p.tables){
     if(!['★','★★','st','sl'].includes(t.tag)||!string(t.name)||!Array.isArray(t.levels))fail();
-    for(const l of t.levels)if(!string(l.level)||!number(l.total)||!l.counts||LAMPS.concat('補助','不明').some(k=>!number(l.counts[k]))||Object.values(l.counts).reduce((n,v)=>n+v,0)!==l.total)fail();
+    for(const l of t.levels){
+      const lamps=LAMPS.concat('補助','不明');
+      if(!string(l.level)||!number(l.total)||!l.counts||lamps.some(k=>!number(l.counts[k]))||Object.values(l.counts).reduce((n,v)=>n+v,0)!==l.total)fail();
+      // Older backups have counts only; they remain usable until the next DB import.
+      if(l.charts!==undefined){
+        if(!Array.isArray(l.charts)||l.charts.length!==l.total)fail();
+        const ids=new Set(),counts=Object.fromEntries(lamps.map(k=>[k,0]));
+        for(const c of l.charts){if(!string(c.id)||ids.has(c.id)||!string(c.title)||!lamps.includes(c.lamp))fail();ids.add(c.id);counts[c.lamp]++;}
+        if(lamps.some(k=>counts[k]!==l.counts[k]))fail();
+      }
+    }
   }
   for(const [d,m]of Object.entries(s.moods))if(!date(d)||!MOODS.includes(m)||!p.days.some(day=>day.date===d&&day.notes>0))fail();
   if(s.metadata!==undefined&&(!Array.isArray(s.metadata)||s.metadata.some(m=>!string(m.sha256)||['md5','title','subtitle'].some(k=>m[k]!=null&&!string(m[k])))))fail();

@@ -65,8 +65,10 @@ export function snapshotFromRows(playerRows,scoreRows,logRows,catalog) {
   for(const day of activity.values())day.updates.sort(chartSort);
   const tables=catalog.tables.map(t=>({...t,levels:t.levels.map(l=>{
     const counts=Object.fromEntries([...LAMPS,'補助','不明'].map(k=>[k,0]));
-    for(const id of l.charts)counts[best.get(id)||'NP']++;
-    return {level:l.level,total:l.charts.length,counts};
+    const charts=l.charts.map(id=>({id,title:catalog.songs.get(id)?.title||id,lamp:best.get(id)||'NP'}));
+    for(const chart of charts)counts[chart.lamp]++;
+    charts.sort((a,b)=>a.title.localeCompare(b.title,'ja')||a.id.localeCompare(b.id));
+    return {level:l.level,total:charts.length,counts,charts};
   })}));
   return {importedAt:new Date().toISOString(),days:[...activity.values()],tables,scoreCount:best.size};
 }
