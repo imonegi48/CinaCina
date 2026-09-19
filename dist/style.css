@@ -3,6 +3,7 @@
 
 .day .notes-mini{color:var(--accent);font-size:12px;line-height:1.4;font-weight:600;font-variant-numeric:tabular-nums;white-space:nowrap}.day{gap:3px}.day .mood-image{width:min(48px,100%);height:auto;aspect-ratio:1}@media(max-width:600px){.day{padding:5px 2px}.day .mood-image{width:32px}.day .notes-mini{font-size:12px;letter-spacing:-.5px}}
 .workspace{grid-template-columns:minmax(455px,.9fr) minmax(0,1.4fr);align-items:start}
+.calendar-panel{align-self:stretch}
 .detail-panel{container-type:inline-size;max-height:none;overflow:visible}
 .detail-panel h2{margin-bottom:12px}
 .detail-panel #open-post{padding:7px 12px;margin-bottom:14px!important;font-size:14px}
